@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розширений Бізнес Модель Канвас</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5a623;
+            --background-color: #f0f4f8;
+            --text-color: #333;
+            --card-background: #ffffff;
+        }
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #3a7bd5;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress {
+            width: 0%;
+            height: 10px;
+            background-color: var(--secondary-color);
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
+        }
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .canvas-item {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .canvas-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .canvas-item h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+        .canvas-item ul {
+            padding-left: 20px;
+        }
+        .canvas-item li {
+            margin-bottom: 10px;
+        }
+        .additional-sections {
+            margin-top: 40px;
+        }
+        #additionalAnalysisBtn {
+            display: none;
+            background-color: var(--secondary-color);
+        }
+        #additionalAnalysisBtn:hover {
+            background-color: #e09600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Розширений Бізнес Модель Канвас</h1>
+        <textarea id="businessIdea" placeholder="Опишіть вашу бізнес ідею тут..."></textarea>
+        <button onclick="getAIAnalysis()">Отримати AI-аналіз</button>
+        <button id="additionalAnalysisBtn" onclick="getAdditionalAnalysis()">Отримати додатковий аналіз</button>
+        <div class="progress-bar">
+            <div id="progress" class="progress"></div>
+        </div>
+        <div id="canvasGrid" class="canvas-grid">
+            <!-- Основні секції канвасу будуть додані тут -->
+        </div>
+        <div class="additional-sections">
+            <h2>Додаткові секції</h2>
+            <div id="additionalSections" class="canvas-grid">
+                <!-- Нові секції будуть додані тут -->
+            </div>
+        </div>
+    </div>
+    <script>
+        let initialAnalysis = null;
+
+        async function getAIAnalysis() {
+            const businessIdea = document.getElementById('businessIdea').value;
+            const progressBar = document.getElementById('progress');
+            const canvasGrid = document.getElementById('canvasGrid');
+            const additionalSections = document.getElementById('additionalSections');
+
+            if (!businessIdea.trim()) {
+                alert('Будь ласка, введіть вашу бізнес-ідею перед запитом аналізу.');
+                return;
+            }
+
+            progressBar.style.width = '10%';
+            canvasGrid.innerHTML = '';
+            additionalSections.innerHTML = '';
+            document.getElementById('additionalAnalysisBtn').style.display = 'none';
+
+            try {
+                progressBar.style.width = '30%';
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ description: businessIdea }),
+                });
+
+                progressBar.style.width = '60%';
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                progressBar.style.width = '90%';
+                
+                initialAnalysis = result;
+                displayCanvasAnalysis(result);
+                document.getElementById('additionalAnalysisBtn').style.display = 'block';
+                progressBar.style.width = '100%';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Сталася помилка при отриманні AI-аналізу. Будь ласка, спробуйте ще раз.');
+                progressBar.style.width = '0%';
+            }
+        }
+
+        async function getAdditionalAnalysis() {
+            if (!initialAnalysis) {
+                alert('Спочатку отримайте основний аналіз.');
+                return;
+            }
+
+            const businessIdea = document.getElementById('businessIdea').value;
+            const progressBar = document.getElementById('progress');
+            const additionalSections = document.getElementById('additionalSections');
+
+            progressBar.style.width = '10%';
+            additionalSections.innerHTML = '';
+
+            try {
+                progressBar.style.width = '30%';
+                const response = await fetch('/api/additional_analysis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        initial_analysis: initialAnalysis,
+                        business_idea: businessIdea 
+                    }),
+                });
+
+                progressBar.style.width = '60%';
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                progressBar.style.width = '90%';
+                
+                displayAdditionalAnalysis(result);
+                progressBar.style.width = '100%';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Сталася помилка при отриманні додаткового аналізу. Будь ласка, спробуйте ще раз.');
+                progressBar.style.width = '0%';
+            }
+        }
+
+        function displayCanvasAnalysis(analysis) {
+            const canvasGrid = document.getElementById('canvasGrid');
+            canvasGrid.innerHTML = '';
+
+            for (const [key, value] of Object.entries(analysis)) {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'canvas-item';
+                itemElement.innerHTML = `
+                    <h3>${formatKey(key)}</h3>
+                    <ul>
+                        ${Object.entries(value).map(([subKey, subValue]) => `<li><strong>${subKey}:</strong> ${subValue}</li>`).join('')}
+                    </ul>
+                `;
+                canvasGrid.appendChild(itemElement);
+            }
+        }
+
+        function displayAdditionalAnalysis(analysis) {
+            const additionalSections = document.getElementById('additionalSections');
+            additionalSections.innerHTML = '';
+
+            for (const [key, value] of Object.entries(analysis)) {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'canvas-item';
+                itemElement.innerHTML = `
+                    <h3>${formatKey(key)}</h3>
+                    <p>${value}</p>
+                `;
+                additionalSections.appendChild(itemElement);
+            }
+        }
+
+        function formatKey(key) {
+            return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+    </script>
+</body>
+</html>
